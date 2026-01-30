@@ -10,7 +10,7 @@
 
 // definições da simulação
 #define PARTICLE_NUM 15
-#define INIT_RADIUS 50
+#define INIT_RADIUS 20
 #define INIT_VELOCITY 5
 
 typedef struct
@@ -21,15 +21,20 @@ typedef struct
 
 void initialize_particles(Particle *particles)
 {
-    int range = (INIT_VELOCITY - (-INIT_VELOCITY) + 1);
+    srand(time(NULL));
+    /* range é pra calcular um numero aleatório entre um minimo e máximo 
+    sendo a velocidade entre (-INIT_VELOCITY) e INIT_VELOCITY
+    e o raio entre 5 e INIT_RADIUS*/
+    int vel_range = (INIT_VELOCITY - (-INIT_VELOCITY) + 1);
+    int rad_range = (INIT_RADIUS - (5) + 1);
     /* inicia a particula com posições aleatórias e com velocidade aleatória 
         entre (-velocidade inicial) e velocidade inicial */
     for(int i=0; i<PARTICLE_NUM; i++)
     {
         particles[i] = (Particle){(rand()%WIDTH), (rand()%HEIGHT), 
-            INIT_RADIUS, 
-            (rand()%range + (-INIT_VELOCITY)), 
-            (rand()%range + (-INIT_VELOCITY))};
+            (rand()%rad_range + (5)), 
+            (rand()%vel_range + (-INIT_VELOCITY)), 
+            (rand()%vel_range + (-INIT_VELOCITY))};
     }
 }
 
@@ -42,7 +47,8 @@ void update_particle(Particle *particle)
     float y = particle->y;
     float rad = particle->rad;
 
-    // colisão com as paredes
+    /* colisão com as paredes, corrige a posição 
+    se for pra fora de parede e reflete a particula */
     if((x-rad) < 0)
     {
         particle->x = rad;
@@ -85,7 +91,6 @@ int main()
 {
     InitWindow(WIDTH, HEIGHT, "Simulação de particulas");
     SetTargetFPS(FPS);
-    srand(time(NULL));
 
     Particle *particles = (Particle*)malloc(PARTICLE_NUM * sizeof(Particle));
     initialize_particles(particles);
