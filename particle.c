@@ -9,9 +9,9 @@
 #define FPS 100
 
 // definições da simulação
-#define PARTICLE_NUM 15
+#define PARTICLE_NUM 40
 #define INIT_RADIUS 20
-#define INIT_VELOCITY 5
+#define INIT_VELOCITY 3
 
 typedef struct
 {
@@ -38,11 +38,8 @@ void initialize_particles(Particle *particles)
     }
 }
 
-void update_particle(Particle *particle)
+void wall_particle_collison(Particle *particle)
 {
-    particle->x += particle->velocity_x;
-    particle->y += particle->velocity_y;
-
     float x = particle->x;
     float y = particle->y;
     float rad = particle->rad;
@@ -71,6 +68,36 @@ void update_particle(Particle *particle)
     }
 }
 
+void particle_particle_collision(Particle *current_particle, Particle *particle_array)
+{
+    Vector2 curVect = (Vector2){current_particle->x, current_particle->y};
+    Vector2 otherVect;
+
+    // verifica a colisão da particula atual com cada uma das outras particulas
+    for(int i=0; i<PARTICLE_NUM; i++)
+    {
+        // pula se estiver comparando a particula com ela mesma
+        if(current_particle == &particle_array[i])
+            continue;
+        
+        otherVect = (Vector2){particle_array[i].x, particle_array[i].y};
+        
+        bool check = CheckCollisionCircles(curVect, current_particle->rad, 
+                        otherVect, particle_array[i].rad);
+        if(check)
+        {
+            // calculo da direção das particulas rebatendo
+        }
+    }
+}
+
+void update_movement(Particle *particle)
+{
+    // move a particula 
+    particle->x += particle->velocity_x;
+    particle->y += particle->velocity_y;
+}
+
 void draw_particles(Particle *particles)
 {
     for(int i=0; i<PARTICLE_NUM; i++)
@@ -79,11 +106,13 @@ void draw_particles(Particle *particles)
     }
 }
 
-void update_environment(Particle *particles)
+void update_particles(Particle *particles)
 {
     for(int i=0; i<PARTICLE_NUM; i++)
     {
-        update_particle(&particles[i]);
+        wall_particle_collison(&particles[i]);
+        particle_particle_collision(&particles[i], particles);
+        update_movement(&particles[i]);
     }
 }
 
@@ -100,8 +129,7 @@ int main()
         ClearBackground(BLACK);
         DrawFPS(10,10);
 
-        update_environment(particles);
-
+        update_particles(particles);
         draw_particles(particles);
 
         EndDrawing();
