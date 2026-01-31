@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <math.h>
 // gcc -Wall -Wextra -g3 -std=c2x -lm particle.c -o output/particle_sim -lraylib -lGL -lm -lpthread -ldl -lrt -lX11 && ./output/particle_sim
 
 #define WIDTH 900
@@ -9,14 +10,15 @@
 #define FPS 100
 
 // definições da simulação
-#define PARTICLE_NUM 40
+#define PARTICLE_NUM 8
 #define INIT_RADIUS 20
 #define INIT_VELOCITY 3
+#define DENSITY 1
 
 typedef struct
 {
    float x, y, rad;
-   float velocity_x, velocity_y;
+   double velocity_x, velocity_y;
 } Particle;
 
 void initialize_particles(Particle *particles)
@@ -73,7 +75,7 @@ void particle_particle_collision(Particle *current_particle, Particle *particle_
     Vector2 curVect = (Vector2){current_particle->x, current_particle->y};
     Vector2 otherVect;
 
-    // verifica a colisão da particula atual com cada uma das outras particulas
+    // verifica a colisão da particula atual com cada uma das outras particulas(particle_array[i])
     for(int i=0; i<PARTICLE_NUM; i++)
     {
         // pula se estiver comparando a particula com ela mesma
@@ -87,13 +89,97 @@ void particle_particle_collision(Particle *current_particle, Particle *particle_
         if(check)
         {
             // calculo da direção das particulas rebatendo
+
+            /* 
+            Matemática da colisão:
+            em 1D: velocidade_final(pós colisão)_A e velocidade_final_B é calculado assim:
+            
+            mA e mB = massa de A e de B. vamos usar o raio pra calcular a massa.
+            massa = densidade*volume
+            (fazer cálculo da massa do circulo com base no raio e densidade)
+            vA2: velocidade final de A. vA1: velocidade inicial de A;
+            vB2: velocidade final de B. vB1: velocidade inicial de B;
+
+            vA2 = (((mA - mB) / (mA + mB))*vA1) + (((2 * mB) / (mA + mB))*vB1)
+            vB2 = (((2 * mA) / (mA + mB))*vA1) + (((mB - mA) / (mA + mB))*vB1)
+
+            Em 2D temos que decompor a velocidade em x e y pra fazer o calculo do vetor
+            e calcular o momento angular da colisão
+
+            a velocidade geral de cada particula tem que ser dividida em em duas velocidades
+            perpendiculares, uma tangente ao ponto de colisão e outra perpendicular a linha 
+            tangente ao ponto de colisão.
+
+            preciso calcular o angulo de deslocamento inicial das particula em colisão
+            usando o x e y da velocidade.
+            usando a função atan2 eu tenho o angulo da direção de x e y, entre -PI e PI
+
+            angulo_inicial = atan2(velocity_x, velocity_y)
+            
+            e também preciso calcular o angulo de contato entre as particulas, pra tagente.
+            pra isso
+
+            encontrei um jeito de calcular o angulo de contato assim:
+            ang_ctt = (PI/2)(90 graus) - arctan((y2-y1) / (x2-x1))
+            sendo x1, x2 e y1, y2 as posições da particula 1 e 2
+
+            no fim, pra calcular as velocidades x e y das particulas 1 e 2 vai ser:
+
+            vFx_1 = ((v1 * cos(ang_mov1 - ang_ctt) * (m1-m2) + 2*m2*v2 * cos(ang_mov2 - ang_ctt)) / m1+m2) * cos(ang_ctt) + v1*sin(ang_mov1 - ang_ctt) * cos(ang_ctt + PI/2)
+            vFy_1 = ((v1 * cos(ang_mov1 - ang_ctt) * (m1-m2) + 2*m2*v2 * cos(ang_mov2 - ang_ctt)) / m1+m2) * sin(ang_ctt) + v1*sin(ang_mov1 - ang_ctt) * sin(ang_ctt + PI/2)
+
+            vFx_2 = ((v2 * cos(ang_mov2 - ang_ctt) * (m2-m1) + 2*m1*v1 * cos(ang_mov1 - ang_ctt)) / m2+m1) * cos(ang_ctt) + v2*sin(ang_mov2 - ang_ctt) * cos(ang_ctt + PI/2)
+            vFy_2 = ((v2 * cos(ang_mov2 - ang_ctt) * (m2-m1) + 2*m1*v1 * cos(ang_mov1 - ang_ctt)) / m2+m1) * sin(ang_ctt) + v2*sin(ang_mov2 - ang_ctt) * sin(ang_ctt + PI/2)
+
+            v1 e v2 são as velocidades escalares das particulas, vel_x + vel_y
+            */
+
+            // primeiro tem que fazer com que as particulas fiquem em uma posição pré colisão, pra que não tenha bug de calcular
+            // mais de uma vez por conta de uma estar minimamente dentro da outra. Mas antes pego a posição dela pra calcular o angulo de colisão depois
+            float x_p1 = current_particle->x;
+            float y_p1 = current_particle->y;
+            float x_p2 = particle_array[i].x;
+            float y_p2 = particle_array[i].y;
+
+            current_particle->x -= current_particle->velocity_x;
+            current_particle->y -= current_particle->velocity_y;
+            particle_array[i].x -= particle_array[i].velocity_x;
+            particle_array[i].y -= particle_array[i].velocity_y;
+            
+
+           // primeiro, calculo a massa
+            double m1 = DENSITY * PI * pow(current_particle->rad, 2)/1000;
+            double m2 = DENSITY * PI * pow(particle_array[i].rad, 2)/1000;
+
+            // depois, calculo de angulos
+            // angulos iniciais de p1 e p2
+            double ang_p1 = atan2(current_particle->velocity_y, current_particle->velocity_x);
+            double ang_p2 = atan2(particle_array[i].velocity_y, particle_array[i].velocity_x);
+
+            
+            double ang_ctt = (PI/2) - atan((y_p2-y_p1)/(x_p2-x_p1));
+
+            // calculo da velocidade escalar
+            double v1 = hypot(current_particle->velocity_x, current_particle->velocity_y);
+            double v2 = hypot(particle_array[i].velocity_x, particle_array[i].velocity_y);
+
+            // por fim, calculo das velocidades após colisão
+            double velF_x1 = (((v1 * cos(ang_p1-ang_ctt) * (m1-m2)) + (2*m2*v2 * cos(ang_p2-ang_ctt))) / (m1+m2)) * (cos(ang_ctt) + v1*sin(ang_p1-ang_ctt) * cos(ang_ctt + PI/2));
+            double velF_y1 = (((v1 * cos(ang_p1-ang_ctt) * (m1-m2)) + (2*m2*v2 * cos(ang_p2-ang_ctt))) / (m1+m2)) * (sin(ang_ctt) + v1*sin(ang_p1-ang_ctt) * sin(ang_ctt + PI/2));
+            double velF_x2 = (((v2 * cos(ang_p2-ang_ctt) * (m2-m1)) + (2*m1*v1 * cos(ang_p1-ang_ctt))) / (m2+m1)) * (cos(ang_ctt) + v2*sin(ang_p2-ang_ctt) * cos(ang_ctt + PI/2));
+            double velF_y2 = (((v2 * cos(ang_p2-ang_ctt) * (m2-m1)) + (2*m1*v1 * cos(ang_p1-ang_ctt))) / (m2+m1)) * (sin(ang_ctt) + v2*sin(ang_p2-ang_ctt) * sin(ang_ctt + PI/2));
+
+            current_particle->velocity_x = velF_x1;
+            current_particle->velocity_y = velF_y1;
+            particle_array[i].velocity_x = velF_x2;
+            particle_array[i].velocity_y = velF_y2; 
+            printf("colisao");
         }
     }
 }
 
 void update_movement(Particle *particle)
 {
-    // move a particula 
     particle->x += particle->velocity_x;
     particle->y += particle->velocity_y;
 }
