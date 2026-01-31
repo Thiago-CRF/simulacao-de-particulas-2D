@@ -156,8 +156,8 @@ void particle_particle_collision(Particle *current_particle, Particle *particle_
             double ang_p1 = atan2(current_particle->velocity_y, current_particle->velocity_x);
             double ang_p2 = atan2(particle_array[i].velocity_y, particle_array[i].velocity_x);
 
-            
-            double ang_ctt = (PI/2) - atan((y_p2-y_p1)/(x_p2-x_p1));
+            // angulo da linha que liga os centros das particulas, em relação ao eixo x
+            double ang_ctt = atan2((y_p2-y_p1),(x_p2-x_p1));
 
             // calculo da velocidade escalar
             double v1 = hypot(current_particle->velocity_x, current_particle->velocity_y);
