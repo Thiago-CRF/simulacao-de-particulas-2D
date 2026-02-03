@@ -7,12 +7,12 @@
 
 #define WIDTH 900
 #define HEIGHT 600
-#define FPS 100
+#define FPS 200
 
 // definições da simulação
 #define PARTICLE_NUM 8
 #define INIT_RADIUS 20
-#define INIT_VELOCITY 3
+#define INIT_VELOCITY 120
 #define DENSITY 1
 
 typedef struct
@@ -70,13 +70,13 @@ void wall_particle_collison(Particle *particle)
     }
 }
 
-void particle_particle_collision(Particle *current_particle, Particle *particle_array)
+void particle_particle_collision(Particle *current_particle, Particle *particle_array, int pos)
 {
     Vector2 curVect = (Vector2){current_particle->x, current_particle->y};
     Vector2 otherVect;
 
     // verifica a colisão da particula atual com cada uma das outras particulas(particle_array[i])
-    for(int i=0; i<PARTICLE_NUM; i++)
+    for(int i=pos+1; i<PARTICLE_NUM; i++)
     {
         // pula se estiver comparando a particula com ela mesma
         if(current_particle == &particle_array[i])
@@ -131,7 +131,7 @@ void particle_particle_collision(Particle *current_particle, Particle *particle_
             vFx_2 = ((v2 * cos(ang_mov2 - ang_ctt) * (m2-m1) + 2*m1*v1 * cos(ang_mov1 - ang_ctt)) / m2+m1) * cos(ang_ctt) + v2*sin(ang_mov2 - ang_ctt) * cos(ang_ctt + PI/2)
             vFy_2 = ((v2 * cos(ang_mov2 - ang_ctt) * (m2-m1) + 2*m1*v1 * cos(ang_mov1 - ang_ctt)) / m2+m1) * sin(ang_ctt) + v2*sin(ang_mov2 - ang_ctt) * sin(ang_ctt + PI/2)
 
-            v1 e v2 são as velocidades escalares das particulas, vel_x + vel_y
+            v1 e v2 são as velocidades escalares das particulas, hypot(vel_x, vel_y)
             */
 
             // primeiro tem que fazer com que as particulas fiquem em uma posição pré colisão, pra que não tenha bug de calcular
@@ -140,12 +140,28 @@ void particle_particle_collision(Particle *current_particle, Particle *particle_
             float y_p1 = current_particle->y;
             float x_p2 = particle_array[i].x;
             float y_p2 = particle_array[i].y;
-
-            current_particle->x -= current_particle->velocity_x;
-            current_particle->y -= current_particle->velocity_y;
-            particle_array[i].x -= particle_array[i].velocity_x;
-            particle_array[i].y -= particle_array[i].velocity_y;
             
+            // calculo de sobreposição das particulas
+            float dx = x_p2-x_p1;
+            float dy = y_p2-y_p1;
+            float dist = sqrt((dx*dx) + (dy*dy));
+
+            float overlap = (current_particle->rad + particle_array[i].rad) - dist;
+            if(overlap > 0)
+            {
+                float move_x = (dx/dist) * (overlap / 2.0f);
+                float move_y = (dy/dist) * (overlap / 2.0f);
+
+                current_particle->x -= move_x;
+                current_particle->y -= move_y;
+                particle_array[i].x += move_x;
+                particle_array[i].y += move_y;
+
+                x_p1 = current_particle->x;
+                y_p1 = current_particle->y;
+                x_p2 = particle_array[i].x;
+                y_p2 = particle_array[i].y;
+            }
 
            // primeiro, calculo a massa
             double m1 = DENSITY * PI * pow(current_particle->rad, 2)/1000;
@@ -180,8 +196,10 @@ void particle_particle_collision(Particle *current_particle, Particle *particle_
 
 void update_movement(Particle *particle)
 {
-    particle->x += particle->velocity_x;
-    particle->y += particle->velocity_y;
+    double delta_t = GetFrameTime();
+
+    particle->x += particle->velocity_x * delta_t;
+    particle->y += particle->velocity_y * delta_t;
 }
 
 void draw_particles(Particle *particles)
@@ -197,7 +215,7 @@ void update_particles(Particle *particles)
     for(int i=0; i<PARTICLE_NUM; i++)
     {
         wall_particle_collison(&particles[i]);
-        particle_particle_collision(&particles[i], particles);
+        particle_particle_collision(&particles[i], particles, i);
         update_movement(&particles[i]);
     }
 }
