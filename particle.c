@@ -114,23 +114,20 @@ void particle_particle_collision(Particle *current_particle, Particle *particle_
             usando o x e y da velocidade.
             usando a função atan2 eu tenho o angulo da direção de x e y, entre -PI e PI
 
-            angulo_inicial = atan2(velocity_x, velocity_y)
+            angulo_inicial = atan2(velocity_x, velocity_y) obs: atan2(vel_y, vel_x), poias atan2 recebe os valores assim
             
             e também preciso calcular o angulo de contato entre as particulas, pra tagente.
             pra isso
 
             encontrei um jeito de calcular o angulo de contato assim:
-            ang_ctt = (PI/2)(90 graus) - arctan((y2-y1) / (x2-x1))
+            ang_ctt = atan2((y2-y1), (x2-x1))
             sendo x1, x2 e y1, y2 as posições da particula 1 e 2
 
             no fim, pra calcular as velocidades x e y das particulas 1 e 2 vai ser:
 
-            vFx_1 = ((v1 * cos(ang_mov1 - ang_ctt) * (m1-m2) + 2*m2*v2 * cos(ang_mov2 - ang_ctt)) / m1+m2) * cos(ang_ctt) + v1*sin(ang_mov1 - ang_ctt) * cos(ang_ctt + PI/2)
-            vFy_1 = ((v1 * cos(ang_mov1 - ang_ctt) * (m1-m2) + 2*m2*v2 * cos(ang_mov2 - ang_ctt)) / m1+m2) * sin(ang_ctt) + v1*sin(ang_mov1 - ang_ctt) * sin(ang_ctt + PI/2)
-
-            vFx_2 = ((v2 * cos(ang_mov2 - ang_ctt) * (m2-m1) + 2*m1*v1 * cos(ang_mov1 - ang_ctt)) / m2+m1) * cos(ang_ctt) + v2*sin(ang_mov2 - ang_ctt) * cos(ang_ctt + PI/2)
-            vFy_2 = ((v2 * cos(ang_mov2 - ang_ctt) * (m2-m1) + 2*m1*v1 * cos(ang_mov1 - ang_ctt)) / m2+m1) * sin(ang_ctt) + v2*sin(ang_mov2 - ang_ctt) * sin(ang_ctt + PI/2)
-
+            vFx_1' = ((vAx * cos(ang_ctt) + vAy * sen(ang_ctt)) * (mA-mB)) + (2*mB * (vBx * cos(ang_ctt) + vBy * sen(ang_ctt)))
+            vFx_1 = (vFx_1' / (mA+mB)) * cos(ang_ctt) + ((vAy * cos(ang_ctt)) - (vAx * sen(ang_ctt)) * cos(ang_ctt + PI))
+        
             v1 e v2 são as velocidades escalares das particulas, hypot(vel_x, vel_y)
             */
 
