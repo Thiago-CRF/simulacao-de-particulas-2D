@@ -10,7 +10,7 @@
 #define FPS 200
 
 // definições da simulação
-#define PARTICLE_NUM 8
+#define PARTICLE_NUM 40
 #define INIT_RADIUS 20
 #define INIT_VELOCITY 120
 #define DENSITY 1
@@ -205,7 +205,7 @@ void particle_particle_collision(Particle *current_particle, Particle *particle_
             current_particle->velocity_y = velF_y1;
             particle_array[i].velocity_x = velF_x2;
             particle_array[i].velocity_y = velF_y2; 
-            printf("colisao");
+            //printf("colisao");
         }
     }
 }
