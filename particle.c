@@ -126,7 +126,10 @@ void particle_particle_collision(Particle *current_particle, Particle *particle_
             no fim, pra calcular as velocidades x e y das particulas 1 e 2 vai ser:
 
             vFx_1' = ((vAx * cos(ang_ctt) + vAy * sen(ang_ctt)) * (mA-mB)) + (2*mB * (vBx * cos(ang_ctt) + vBy * sen(ang_ctt)))
-            vFx_1 = (vFx_1' / (mA+mB)) * cos(ang_ctt) + ((vAy * cos(ang_ctt)) - (vAx * sen(ang_ctt)) * cos(ang_ctt + PI))
+            vFx_1 = ((vFx_1' / (mA+mB)) * cos(ang_ctt)) + ((vAy * cos(ang_ctt)) - (vAx * sen(ang_ctt)) * cos(ang_ctt + PI/2))
+
+            vFy_1' = ((vAx * cos(ang_ctt) + vAy * sen(ang_ctt)) * (mA-mB)) + (2*mB * (vBx * cos(ang_ctt) + vBy * sen(ang_ctt)))
+            vFy_1 = ((vFy_1' / (mA+mB)) * sen(ang_ctt)) + ((vAy * cos(ang_ctt)) - vAx * sen(ang_ctt)) * sen(ang_ctt + PI/2)
         
             v1 e v2 são as velocidades escalares das particulas, hypot(vel_x, vel_y)
             */
