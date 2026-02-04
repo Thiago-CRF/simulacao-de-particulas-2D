@@ -125,11 +125,19 @@ void particle_particle_collision(Particle *current_particle, Particle *particle_
 
             no fim, pra calcular as velocidades x e y das particulas 1 e 2 vai ser:
 
-            vFx_1' = ((vAx * cos(ang_ctt) + vAy * sen(ang_ctt)) * (mA-mB)) + (2*mB * (vBx * cos(ang_ctt) + vBy * sen(ang_ctt)))
-            vFx_1 = ((vFx_1' / (mA+mB)) * cos(ang_ctt)) + ((vAy * cos(ang_ctt)) - (vAx * sen(ang_ctt)) * cos(ang_ctt + PI/2))
+            // particula A
+            vFx_A' = ((vAx * cos(ang_ctt) + vAy * sen(ang_ctt)) * (mA-mB)) + (2*mB * (vBx * cos(ang_ctt) + vBy * sen(ang_ctt)))
+            vFx_A = ((vFx_A' / (mA+mB)) * cos(ang_ctt)) + ((vAy * cos(ang_ctt)) - (vAx * sen(ang_ctt)) * cos(ang_ctt + PI/2))
 
-            vFy_1' = ((vAx * cos(ang_ctt) + vAy * sen(ang_ctt)) * (mA-mB)) + (2*mB * (vBx * cos(ang_ctt) + vBy * sen(ang_ctt)))
-            vFy_1 = ((vFy_1' / (mA+mB)) * sen(ang_ctt)) + ((vAy * cos(ang_ctt)) - vAx * sen(ang_ctt)) * sen(ang_ctt + PI/2)
+            vFy_A' = ((vAx * cos(ang_ctt) + vAy * sen(ang_ctt)) * (mA-mB)) + (2*mB * (vBx * cos(ang_ctt) + vBy * sen(ang_ctt)))
+            vFy_A = ((vFy_A' / (mA+mB)) * sen(ang_ctt)) + ((vAy * cos(ang_ctt)) - vAx * sen(ang_ctt)) * sen(ang_ctt + PI/2)
+
+            // particula B
+            vFx_B' = ((vBx * cos(ang_ctt) + vBy * sen(ang_ctt)) * (mB-mA)) + (2*mA * (vAx * cos(ang_ctt) + vAy * sen(ang_ctt)))
+            vFx_B = ((vFx_B' / (mA+mB)) * cos(ang_ctt)) + ((vBy * cos(ang_ctt)) - (vBx * sen(ang_ctt)) * cos(ang_ctt + PI/2))
+
+            vFy_B' = ((vBx * cos(ang_ctt) + vBy * sen(ang_ctt)) * (mB-mA)) + (2*mA * (vAx * cos(ang_ctt) + vAy * sen(ang_ctt)))
+            vFy_B = ((vFy_B' / (mA+mB)) * sen(ang_ctt)) + ((vBy * cos(ang_ctt)) - (vBx * sen(ang_ctt)) * sen(ang_ctt + PI/2))
         
             v1 e v2 são as velocidades escalares das particulas, hypot(vel_x, vel_y)
             */
@@ -167,24 +175,32 @@ void particle_particle_collision(Particle *current_particle, Particle *particle_
             double m1 = DENSITY * PI * pow(current_particle->rad, 2)/1000;
             double m2 = DENSITY * PI * pow(particle_array[i].rad, 2)/1000;
 
-            // depois, calculo de angulos
-            // angulos iniciais de p1 e p2
-            double ang_p1 = atan2(current_particle->velocity_y, current_particle->velocity_x);
-            double ang_p2 = atan2(particle_array[i].velocity_y, particle_array[i].velocity_x);
-
             // angulo da linha que liga os centros das particulas, em relação ao eixo x
             double ang_ctt = atan2((y_p2-y_p1),(x_p2-x_p1));
 
-            // calculo da velocidade escalar
-            double v1 = hypot(current_particle->velocity_x, current_particle->velocity_y);
-            double v2 = hypot(particle_array[i].velocity_x, particle_array[i].velocity_y);
+            // armazenar as velocidades e angulos pro calculo
+            double v1_X = current_particle->velocity_x;
+            double v1_Y = current_particle->velocity_y;
+            double v2_X = particle_array[i].velocity_x;
+            double v2_Y = particle_array[i].velocity_y;
 
+            double cos_ctt = cos(ang_ctt);
+            double sen_ctt = sin(ang_ctt);
             // por fim, calculo das velocidades após colisão
-            double velF_x1 = (((v1 * cos(ang_p1-ang_ctt) * (m1-m2)) + (2*m2*v2 * cos(ang_p2-ang_ctt))) / (m1+m2)) * (cos(ang_ctt) + v1*sin(ang_p1-ang_ctt) * cos(ang_ctt + PI/2));
-            double velF_y1 = (((v1 * cos(ang_p1-ang_ctt) * (m1-m2)) + (2*m2*v2 * cos(ang_p2-ang_ctt))) / (m1+m2)) * (sin(ang_ctt) + v1*sin(ang_p1-ang_ctt) * sin(ang_ctt + PI/2));
-            double velF_x2 = (((v2 * cos(ang_p2-ang_ctt) * (m2-m1)) + (2*m1*v1 * cos(ang_p1-ang_ctt))) / (m2+m1)) * (cos(ang_ctt) + v2*sin(ang_p2-ang_ctt) * cos(ang_ctt + PI/2));
-            double velF_y2 = (((v2 * cos(ang_p2-ang_ctt) * (m2-m1)) + (2*m1*v1 * cos(ang_p1-ang_ctt))) / (m2+m1)) * (sin(ang_ctt) + v2*sin(ang_p2-ang_ctt) * sin(ang_ctt + PI/2));
 
+            // vFx_A' = ((vAx * cos(ang_ctt) + vAy * sen(ang_ctt)) * (mA-mB)) + (2*mB * (vBx * cos(ang_ctt) + vBy * sen(ang_ctt)))
+            double pre_calc_1 = (((v1_X * cos_ctt) + (v1_Y * sen_ctt)) * (m1-m2)) + (2*m2 * ((v2_X * cos_ctt) + (v2_Y * sen_ctt)));
+            // vFx_B' = ((vBx * cos(ang_ctt) + vBy * sen(ang_ctt)) * (mB-mA)) + (2*mA * (vAx * cos(ang_ctt) + vAy * sen(ang_ctt)))
+            double pre_calc_2 = (((v2_X * cos_ctt) + (v2_Y * sen_ctt)) * (m2-m1)) + (2*m1 * ((v1_X * cos_ctt) + (v1_Y * sen_ctt)));
+
+            // velocidades X e Y finais das duas particulas
+            double velF_x1 = ((pre_calc_1 / (m1+m2)) * cos_ctt) + (((v1_Y * cos_ctt) - (v1_X * sen_ctt)) * cos(ang_ctt+(PI/2)));
+            double velF_y1 = ((pre_calc_1 / (m1+m2)) * sen_ctt) + (((v1_Y * cos_ctt) - (v1_X * sen_ctt)) * sin(ang_ctt+(PI/2)));
+
+            double velF_x2 = ((pre_calc_2 / (m1+m2)) * cos_ctt) + (((v2_Y * cos_ctt) - (v2_X * sen_ctt)) * cos(ang_ctt+(PI/2)));
+            double velF_y2 = ((pre_calc_2 / (m1+m2)) * sen_ctt) + (((v2_Y * cos_ctt) - (v2_X * sen_ctt)) * sin(ang_ctt+(PI/2)));
+
+            // att da velocidade
             current_particle->velocity_x = velF_x1;
             current_particle->velocity_y = velF_y1;
             particle_array[i].velocity_x = velF_x2;
