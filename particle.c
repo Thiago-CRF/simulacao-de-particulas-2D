@@ -5,13 +5,13 @@
 #include <math.h>
 // gcc -Wall -Wextra -g3 -std=c2x -lm particle.c -o output/particle_sim -lraylib -lGL -lm -lpthread -ldl -lrt -lX11 && ./output/particle_sim
 
-#define WIDTH 900
-#define HEIGHT 600
+#define WIDTH 1600
+#define HEIGHT 900
 #define FPS 200
 
 // definições da simulação
-#define PARTICLE_NUM 40
-#define INIT_RADIUS 20
+#define PARTICLE_NUM 100
+#define INIT_RADIUS 30
 #define INIT_VELOCITY 120
 #define DENSITY 1
 
@@ -172,8 +172,8 @@ void particle_particle_collision(Particle *current_particle, Particle *particle_
             }
 
            // primeiro, calculo a massa
-            double m1 = DENSITY * PI * pow(current_particle->rad, 2)/1000;
-            double m2 = DENSITY * PI * pow(particle_array[i].rad, 2)/1000;
+            double m1 = DENSITY * PI * pow(current_particle->rad, 2);
+            double m2 = DENSITY * PI * pow(particle_array[i].rad, 2);
 
             // angulo da linha que liga os centros das particulas, em relação ao eixo x
             double ang_ctt = atan2((y_p2-y_p1),(x_p2-x_p1));
@@ -256,6 +256,7 @@ int main()
     }
 
     CloseWindow();
+    free(particles);
 
     return 0;
 }
