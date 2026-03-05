@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <time.h>
 #include <math.h>
+#define RAYGUI_IMPLEMENTATION
+#include "raygui.h"
 // gcc -Wall -Wextra -g3 -std=c2x -lm particle.c -o output/particle_sim -lraylib -lGL -lm -lpthread -ldl -lrt -lX11 && ./output/particle_sim
 
 #define WIDTH 1600
